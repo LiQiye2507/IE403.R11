@@ -1,0 +1,24 @@
+# Chrome user data and crawler cache
+2.Crawl_data/chrome_user_data/
+chrome_user_data/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.env
+
+# OS temporary files
+Thumbs.db
+Desktop.ini
+.DS_Store
