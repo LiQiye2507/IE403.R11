@@ -33,8 +33,8 @@ def create_notebook():
 2. **Quy trình làm sạch dữ liệu (Data Cleaning & Normalization)**: Loại bỏ các chuỗi dịch tự động của Google, loại bỏ bình luận rác/quá ngắn, khử trùng lặp hoàn toàn nội dung bình luận.
 3. **Ẩn danh hóa (Data Anonymization)**: Loại bỏ thông tin cá nhân của người đánh giá và liên kết định danh cá nhân nhằm đảm bảo đạo đức nghiên cứu, mã hóa cơ sở F&B thành `place_id`.
 4. **Chiến lược lấy mẫu phân tầng cân bằng (Stratified Sampling - 10.000 dòng)**: Cân bằng hoàn hảo 3 nhóm cảm xúc chính (Tiêu cực, Trung tính, Tích cực) nhằm làm đầu vào tối ưu cho mô hình ngôn ngữ lớn (LLM Zero/Few-shot Labeling).
-5. **Khảo sát đặc trưng ngôn ngữ tự nhiên (NLP Characteristics)**: Phân tích độ dài câu (chứng minh tính khả thi của ngưỡng `max_length=128` cho PhoBERT), thống kê tần suất từ lóng (Teencode) và biểu tượng cảm xúc (Emoji).
-6. **Xây dựng bộ mẫu chuẩn đối chứng (Gold Standard - 200 mẫu)**: Thiết lập template đánh giá độc lập cho 4 thành viên (ẩn số sao) phục vụ kiểm định độ tin cậy liên người gán (Inter-Annotator Agreement - Fleiss' Kappa) và đối sánh với LLM."""))
+5. **Khảo sát đặc trưng ngôn ngữ tự nhiên (NLP Characteristics)**: Phân tích độ dài câu (chứng minh tính khả thi của ngưỡng `max_length=128` cho các mô hình Transformer như PhoBERT, ViSoBERT, CafeBERT), thống kê tần suất từ lóng (Teencode) và biểu tượng cảm xúc (Emoji).
+6. **Xây dựng bộ mẫu chuẩn đối chứng (Gold Standard - 200 mẫu)**: Thiết lập template đánh giá độc lập (ẩn số sao) theo cấu trúc **5 khía cạnh ABSA (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`) × 3 cực cảm xúc (`POSITIVE`, `NEUTRAL`, `NEGATIVE` + `NONE`)** phục vụ kiểm định độ tin cậy liên người gán (Fleiss' Kappa / Average Pairwise Cohen's Kappa) và đối sánh với LLM."""))
 
     # =========================================================================
     # CELL 2: Setup Environment
@@ -445,16 +445,22 @@ plt.show()"""))
     # CELL 20: Markdown Phần 4
     # =========================================================================
     cells.append(nbf.v4.new_markdown_cell("""---
-## PHẦN 4: KHẢO SÁT TẬP MẪU CHUẨN ĐỐI CHỨNG (GOLD STANDARD 200 MẪU)
+## PHẦN 4: KHẢO SÁT TẬP MẪU CHUẨN ĐỐI CHỨNG (GOLD STANDARD 200 MẪU - CẤU TRÚC 5 KHÍA CẠNH ABSA)
 
 File `gold_standard_200_template.csv` được trích xuất phân tầng từ tập 10.000 dòng theo tỷ lệ:
 - **Tiêu cực (1-2 sao)**: 66 mẫu
 - **Trung tính (3 sao)**: 68 mẫu
 - **Tích cực (4-5 sao)**: 66 mẫu
 
-**Nguyên tắc thiết kế phục vụ gán nhãn khoa học:**
-1. **Ẩn cột `so_sao`**: Đảm bảo 4 thành viên gán nhãn hoàn toàn dựa trên ngữ nghĩa văn bản (Human-in-the-loop), không bị tác động tâm lý bởi xếp hạng sao của người dùng.
-2. **Cấu trúc cột chuẩn hóa**: Cung cấp sẵn các trường `sentiment_1`, `is_mixed_1` đến `sentiment_4`, `is_mixed_4` để từng thành viên điền độc lập, sau đó tính hệ số đồng thuận **Fleiss' Kappa** và **Cohen's Kappa** đối chứng với LLM."""))
+**Nguyên tắc thiết kế phục vụ gán nhãn đa khía cạnh (ABSA - 5 Khía cạnh × 3 Cực cảm xúc):**
+1. **Ẩn cột `so_sao`**: Đảm bảo các thành viên gán nhãn hoàn toàn dựa trên ngữ nghĩa văn bản (Human-in-the-loop), không bị tác động tâm lý bởi xếp hạng sao của người dùng.
+2. **Cấu trúc 5 khía cạnh đặc thù F&B (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`)**:
+   - `FOOD`: Chất lượng đồ ăn & thức uống (hương vị, độ tươi ngon, khẩu phần, cách chế biến).
+   - `SERVICE`: Dịch vụ & thái độ phục vụ (nhân viên, chủ quán, bảo vệ, tốc độ lên món).
+   - `PRICE`: Giá cả (đắt, rẻ, hợp lý so với chất lượng, phụ thu).
+   - `AMBIENCE`: Không gian & vệ sinh an toàn thực phẩm (decor, bàn ghế, máy lạnh, độ sạch sẽ).
+   - `GENERAL`: Đánh giá tổng thể & vị trí (nhận xét chung, ý định quay lại, chỗ gửi xe).
+3. **Thang giá trị gán cho mỗi khía cạnh**: Mỗi khía cạnh nhận 1 trong 3 cực cảm xúc (`POSITIVE`, `NEUTRAL`, `NEGATIVE`) hoặc `NONE` (nếu bình luận không đề cập đến khía cạnh đó). Các thành viên gán nhãn độc lập trên bản sao của template để tính **Fleiss' Kappa**, **Average Pairwise Cohen's Kappa** theo từng khía cạnh và đối sánh với LLM."""))
 
     # =========================================================================
     # CELL 21: Code kiểm tra file 200 mẫu
@@ -464,11 +470,11 @@ df_gold = pd.read_csv(gold_path)
 
 print(f"Kích thước tập Gold Standard: {df_gold.shape}")
 print(f"Cột `so_sao` có trong file không? -> {'so_sao' in df_gold.columns} (Đã ẩn hoàn toàn)")
-print("\\nDanh sách các cột trong Gold Standard:")
+print("\\nDanh sách 13 cột trong Gold Standard (8 cột metadata + 5 cột khía cạnh ABSA):")
 print(df_gold.columns.tolist())
 
 # Hiển thị 3 mẫu đầu tiên của template
-df_gold[['id', 'place_id', 'thanh_pho', 'phan_loai', 'noi_dung_review', 'sentiment_1', 'is_mixed_1']].head(3)"""))
+df_gold[['id', 'place_id', 'thanh_pho', 'phan_loai', 'noi_dung_review', 'FOOD', 'SERVICE', 'PRICE', 'AMBIENCE', 'GENERAL']].head(3)"""))
 
     # =========================================================================
     # CELL 22: Markdown Phần 5
@@ -479,14 +485,14 @@ df_gold[['id', 'place_id', 'thanh_pho', 'phan_loai', 'noi_dung_review', 'sentime
 ### 1. Tổng kết các kết quả đạt được từ EDA:
 - **Dữ liệu sạch & An toàn**: Đã loại bỏ 100% các dòng khuyết thiếu, khử trùng lặp, lọc các nhận xét rác/quá ngắn và ẩn danh hóa thông tin cá nhân.
 - **Giải quyết triệt để Class Imbalance**: Xây dựng thành công tập 10.000 dòng phân tầng cân bằng 3 cực cảm xúc (33.33% - 33.34% - 33.33%), triệt tiêu hoàn toàn bias lệch về 5 sao của tập thô ban đầu.
-- **Xác lập tham số mô hình hóa**: Chứng minh ngưỡng `max_length=128` cho PhoBERT là tối ưu về mặt chi phí và bao phủ >90.5% bình luận.
-- **Đặc trưng ngôn ngữ**: Thống kê danh mục Teencode (`ko`, `k`, `đc`, `nv`, `vs`...) và Emoji, đặt nền móng cho việc xây dựng từ điển chuẩn hóa văn bản ở giai đoạn gán nhãn và huấn luyện.
+- **Xác lập tham số mô hình hóa**: Chứng minh ngưỡng `max_length=128` cho các mô hình Transformer (`PhoBERT-base-v2`, `ViSoBERT`, `CafeBERT`) là tối ưu về mặt chi phí và bao phủ >90.5% bình luận.
+- **Đặc trưng ngôn ngữ**: Thống kê danh mục Teencode (`ko`, `k`, `đc`, `nv`, `vs`...) và Emoji, đặt nền móng cho việc thử nghiệm các kịch bản tiền xử lý (giữ nguyên Emoji gốc vs chuyển đổi Emoji sang văn bản kết hợp chuẩn hóa Teencode).
 
-### 2. Kế hoạch triển khai giai đoạn 4 (LLM Labeling & Fine-tuning):
-1. **Annotation với 4 Annotator**: 4 thành viên tiến hành gán nhãn độc lập trên `gold_standard_200_template.csv`.
-2. **Kiểm định Inter-Annotator Agreement**: Tính toán Fleiss' Kappa giữa 4 thành viên.
-3. **Prompt Engineering & LLM Zero/Few-shot**: Thiết kế prompt hướng dẫn mô hình ngôn ngữ lớn (Gemini 1.5 Flash / GPT-4o-mini) gán nhãn 10.000 mẫu trên các khía cạnh (Chất lượng đồ ăn, Dịch vụ, Giá cả, Không gian, Vệ sinh).
-4. **Đối chứng & Đánh giá**: Tính Cohen's Kappa giữa nhãn đồng thuận của con người và nhãn sinh bởi LLM trên tập 200 mẫu."""))
+### 2. Kế hoạch triển khai giai đoạn 4 (LLM-Assisted ABSA Labeling & Fine-tuning):
+1. **Annotation trên 5 khía cạnh (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`)**: 4 thành viên tiến hành gán nhãn độc lập với bộ giá trị (`POSITIVE`, `NEUTRAL`, `NEGATIVE`, `NONE`) trên `gold_standard_200_template.csv`.
+2. **Kiểm định Inter-Annotator Agreement**: Tính toán **Fleiss' Kappa** và **Average Pairwise Cohen's Kappa** cho từng khía cạnh trong 5 khía cạnh.
+3. **Prompt Engineering & Multi-LLM Labeling**: Thiết kế prompt chuẩn hóa hướng dẫn các mô hình ngôn ngữ lớn (Gemini Flash, Llama 3, Gemma 3) gán nhãn đa khía cạnh cho 10.000 mẫu.
+4. **Đối chứng & Huấn luyện**: Đánh giá mức độ khớp giữa LLM và con người, sau đó huấn luyện và so sánh hiệu năng trên các kiến trúc `PhoBERT-base-v2`, `ViSoBERT` và `CafeBERT`."""))
 
     nb.cells = cells
     with open(NOTEBOOK_PATH, "w", encoding="utf-8") as f:
@@ -509,4 +515,5 @@ def execute_notebook():
 
 if __name__ == "__main__":
     create_notebook()
-    execute_notebook()
+    from execute_notebook_inprocess import execute_notebook as exec_inprocess
+    exec_inprocess()

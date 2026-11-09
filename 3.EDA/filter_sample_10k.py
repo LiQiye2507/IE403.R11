@@ -22,7 +22,7 @@ Nhiệm vụ:
      - Trộn ngẫu nhiên (random_state=42) và gán `id` từ REV_00001 đến REV_10000.
   5. Xuất file:
      - `3.EDA/dataset_10000_unlabeled.csv` (10.000 dòng cho LLM labeling).
-     - `3.EDA/gold_standard_200_template.csv` (200 mẫu ẩn số sao phục vụ gán nhãn thủ công 4 người).
+     - `3.EDA/gold_standard_200_template.csv` (200 mẫu ẩn số sao với cấu trúc 5 khía cạnh ABSA: FOOD, SERVICE, PRICE, AMBIENCE, GENERAL phục vụ gán nhãn độc lập).
 """
 
 import os
@@ -199,19 +199,17 @@ def run_pipeline():
     # Shuffle lại để các nhóm trộn lẫn ngẫu nhiên
     df_200 = df_200.sample(frac=1.0, random_state=RANDOM_STATE).reset_index(drop=True)
 
-    # Tạo sẵn các cột trống cho 4 thành viên gán nhãn độc lập
-    for i in range(1, 5):
-        df_200[f"sentiment_{i}"] = ""
-        df_200[f"is_mixed_{i}"] = ""
+    # Tạo sẵn 5 cột khía cạnh ABSA (FOOD, SERVICE, PRICE, AMBIENCE, GENERAL)
+    # Mỗi cột nhận giá trị: POSITIVE, NEGATIVE, NEUTRAL, hoặc NONE
+    absa_aspects = ["FOOD", "SERVICE", "PRICE", "AMBIENCE", "GENERAL"]
+    for aspect in absa_aspects:
+        df_200[aspect] = ""
 
     # Các cột xuất ra tập 200 mẫu (ẨN CỘT `so_sao` HOÀN TOÀN)
     cols_200 = [
         "id", "place_id", "thanh_pho", "quan_huyen", "phan_loai",
         "thoi_gian", "so_luot_thich", "noi_dung_review",
-        "sentiment_1", "is_mixed_1",
-        "sentiment_2", "is_mixed_2",
-        "sentiment_3", "is_mixed_3",
-        "sentiment_4", "is_mixed_4"
+        "FOOD", "SERVICE", "PRICE", "AMBIENCE", "GENERAL"
     ]
     df_200_out = df_200[cols_200].copy()
 

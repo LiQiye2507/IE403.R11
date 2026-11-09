@@ -11,8 +11,8 @@ Giai đoạn này đóng vai trò bản lề trong chu trình khoa học dữ li
 2. **Làm sạch & Chuẩn hóa (Data Cleaning & Normalization)**: Loại bỏ các tạp âm hệ thống (chuỗi dịch tự động của Google), lọc bỏ bình luận ngắn/nhiễu và khử trùng lặp hoàn toàn.
 3. **Ẩn danh hóa dữ liệu (Anonymization)**: Đảm bảo đạo đức nghiên cứu bằng cách loại bỏ tên tài khoản người đánh giá, URL Google Maps và mã hóa định danh quán thành `place_id`.
 4. **Lấy mẫu phân tầng cân bằng (Stratified Sampling - 10.000 mẫu)**: Cân bằng hoàn hảo 3 nhóm cảm xúc (*Tiêu cực, Trung tính, Tích cực*) làm đầu vào tối ưu cho mô hình ngôn ngữ lớn (LLM Labeling).
-5. **Xây dựng tập đối chứng chuẩn (Gold Standard - 200 mẫu)**: Trích xuất phân tầng 200 mẫu ẩn số sao để 4 thành viên gán nhãn độc lập phục vụ kiểm định độ tin cậy liên người gán (*Fleiss' Kappa*) và đối chứng với LLM (*Cohen's Kappa*).
-6. **Khảo sát đặc trưng ngôn ngữ mạng**: Phân tích độ dài câu (kiểm chứng ngưỡng `max_length=128` cho PhoBERT), thống kê tần suất từ lóng (*Teencode*) và biểu tượng cảm xúc (*Emoji*).
+5. **Xây dựng tập đối chứng chuẩn ABSA (Gold Standard - 200 mẫu)**: Trích xuất phân tầng 200 mẫu ẩn số sao theo cấu trúc **5 khía cạnh (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`) × 3 cực cảm xúc (`POSITIVE`, `NEUTRAL`, `NEGATIVE` + `NONE`)** để gán nhãn độc lập phục vụ kiểm định *Fleiss' Kappa* và *Cohen's Kappa*.
+6. **Khảo sát đặc trưng ngôn ngữ mạng**: Phân tích độ dài câu (kiểm chứng ngưỡng `max_length=128` cho PhoBERT / ViSoBERT / CafeBERT), thống kê tần suất từ lóng (*Teencode*) và biểu tượng cảm xúc (*Emoji*).
 
 ---
 
@@ -159,23 +159,34 @@ Trong mô hình Transformer học sâu tiếng Việt (như PhoBERT `vinai/phobe
 
 ---
 
-## 🎯 5. Thiết Kế Tập Đối Chứng Chuẩn (Gold Standard - 200 Mẫu)
+## 🎯 5. Thiết Kế Tập Đối Chứng Chuẩn ABSA (Gold Standard - 200 Mẫu, 5 Khía Cạnh × 3 Cực Cảm Xúc)
 
-File `3.EDA/gold_standard_200_template.csv` được thiết lập nhằm làm thước đo chuẩn (*Ground Truth*) để đánh giá chất lượng gán nhãn của LLM (GPT-4o / Gemini 1.5):
+File `3.EDA/gold_standard_200_template.csv` được thiết lập theo chuẩn **Phân tích cảm xúc đa khía cạnh (Aspect-Based Sentiment Analysis - ABSA)** nhằm làm thước đo chuẩn (*Ground Truth*) để đánh giá chất lượng gán nhãn của con người và đa mô hình ngôn ngữ lớn (Gemini Flash / Llama 3 / Gemma 3):
+
 1. **Quy mô & Phân tầng**: Đúng **200 mẫu** trích xuất phân tầng từ tập 10.000 dòng:
    - 66 mẫu Tiêu cực (1-2 sao)
    - 68 mẫu Trung tính (3 sao)
    - 66 mẫu Tích cực (4-5 sao)
-2. **Ẩn số sao (`so_sao`)**: Cột xếp hạng sao bị loại bỏ hoàn toàn để người gán nhãn đánh giá khách quan dựa trên câu chữ.
-3. **Cấu trúc trường thông tin gán nhãn**:
-   - `id`, `place_id`, `thanh_pho`, `quan_huyen`, `phan_loai`, `thoi_gian`, `so_luot_thich`, `noi_dung_review`
-   - `sentiment_1`, `is_mixed_1`: Nhãn phân loại cảm xúc và cờ cảm xúc hỗn hợp của Thành viên 1.
-   - `sentiment_2`, `is_mixed_2`: Của Thành viên 2.
-   - `sentiment_3`, `is_mixed_3`: Của Thành viên 3.
-   - `sentiment_4`, `is_mixed_4`: Của Thành viên 4.
-4. **Mục đích kiểm định**:
-   - Đo lường hệ số tương đồng liên người gán **Fleiss' Kappa** giữa 4 thành viên nhóm.
-   - Đo lường hệ số **Cohen's Kappa** giữa nhãn đồng thuận của con người (*Human Consensus*) và nhãn sinh bởi mô hình ngôn ngữ lớn (LLM).
+2. **Ẩn số sao (`so_sao`)**: Cột xếp hạng sao bị loại bỏ hoàn toàn để người gán nhãn đánh giá khách quan 100% dựa trên ngữ nghĩa câu chữ.
+3. **Cấu trúc 13 trường thông tin (8 cột Metadata + 5 cột Khía cạnh ABSA)**:
+   - **Metadata (8 cột)**: `id`, `place_id`, `thanh_pho`, `quan_huyen`, `phan_loai`, `thoi_gian`, `so_luot_thich`, `noi_dung_review`.
+   - **5 Khía cạnh ABSA đặc thù ngành F&B (5 cột)**:
+     | Mã khía cạnh | Tên khía cạnh | Phạm vi ngữ nghĩa trong đánh giá F&B |
+     | :--- | :--- | :--- |
+     | **`FOOD`** | Đồ ăn & Thức uống | Hương vị, độ tươi ngon, cách chế biến, khẩu phần (nhiều/ít), thực đơn, trình bày món. |
+     | **`SERVICE`** | Dịch vụ & Phục vụ | Thái độ nhân viên (`nv`), chủ quán, bảo vệ, tốc độ lên món, quy trình gọi món/thanh toán. |
+     | **`PRICE`** | Giá cả | Mức giá đắt/rẻ/hợp lý so với chất lượng, phụ thu, khuyến mãi. |
+     | **`AMBIENCE`** | Không gian & Vệ sinh | Không gian (rộng/chật, mát/nóng, yên tĩnh/ồn ào), decor, bàn ghế, **vệ sinh an toàn thực phẩm**. |
+     | **`GENERAL`** | Đánh giá chung & Vị trí | Nhận xét tổng thể không nêu khía cạnh cụ thể, ý định quay lại, vị trí quán/chỗ để xe. |
+4. **Bộ nhãn gán cho mỗi khía cạnh (3 Cực cảm xúc + `NONE`)**:
+   - `POSITIVE`: Khen ngợi, hài lòng, đánh giá tích cực về khía cạnh đó.
+   - `NEGATIVE`: Chê bai, phàn nàn, thất vọng, bức xúc về khía cạnh đó.
+   - `NEUTRAL`: Chỉ đề cập thông tin khách quan (VD: *"Phở giá 50k"*) hoặc khen chê trung hòa.
+   - `NONE` (hoặc để trống): Bình luận không đề cập đến khía cạnh này.
+5. **Mục đích kiểm định học thuật**:
+   - Mỗi thành viên nhóm nhận 1 bản sao độc lập của `gold_standard_200_template.csv` để gán nhãn mù (*blind annotation*), tránh hiệu ứng thiên kiến dây chuyền.
+   - Đo lường hệ số đồng thuận **Fleiss' Kappa** và **Average Pairwise Cohen's Kappa** ($\kappa = \frac{\sum \kappa_{ij}}{C}$) trên từng khía cạnh trong 5 khía cạnh.
+   - Đối sánh nhãn đồng thuận của con người (*Human Consensus*) với nhãn sinh bởi LLM theo 4 nhóm: *Exact match*, *Updated*, *Only removed*, *Only added*.
 
 ---
 

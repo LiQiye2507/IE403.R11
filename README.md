@@ -33,7 +33,7 @@ IE403.R11/
 │   ├── execute_notebook_inprocess.py # Script thực thi tự động toàn bộ cells của Notebook
 │   ├── eda_raw_and_sampled.ipynb   # Jupyter Notebook hoàn chỉnh có sẵn outputs và lý giải học thuật
 │   ├── dataset_10000_unlabeled.csv # Tập 10.000 đánh giá cân bằng 3 cực sẵn sàng cho LLM Labeling
-│   ├── gold_standard_200_template.csv # Template 200 mẫu ẩn số sao phục vụ gán nhãn 4 người độc lập
+│   ├── gold_standard_200_template.csv # Template 200 mẫu ẩn số sao với 5 khía cạnh ABSA (FOOD, SERVICE, PRICE, AMBIENCE, GENERAL)
 │   └── figures/                    # Thư mục lưu trữ biểu đồ trực quan hóa (DPI=300)
 │       ├── star_distribution_comparison.png # So sánh phân bố số sao trước vs sau lấy mẫu
 │       ├── word_count_analysis.png          # Độ dài từ, kiểm chứng max_length=128 cho PhoBERT & Boxplot
@@ -59,7 +59,7 @@ IE403.R11/
 3. **[3.EDA](file:///c:/Users/ZiLing05/Desktop/IE403.R11/3.EDA/README.md)**:
    - **Làm sạch & Ẩn danh**: Khử khuyết thiếu NaN (loại 265 dòng), xóa nhãn dịch tự động Google, lọc bỏ bình luận rác/ngắn < 4 từ (loại 78 dòng), khử trùng lặp hoàn toàn nội dung (loại 278 dòng). Ẩn danh hóa người dùng và mã hóa quán thành `place_id` (P0001 -> P1500).
    - **Lấy mẫu phân tầng 10.000 mẫu**: Tái cân bằng hoàn hảo 3 nhóm cảm xúc (*Tiêu cực: 3.333 mẫu, Trung tính: 3.334 mẫu, Tích cực: 3.333 mẫu*), xóa bỏ hoàn toàn hiện tượng lệch về 5 sao của tập thô.
-   - **Xây dựng Gold Standard 200 mẫu**: Ẩn số sao, cung cấp cấu trúc cột cho 4 thành viên gán nhãn độc lập để đo lường độ đồng thuận Fleiss' Kappa và đối chứng với LLM.
+   - **Xây dựng Gold Standard 200 mẫu (5 khía cạnh ABSA)**: Ẩn số sao, thiết kế chuẩn 5 khía cạnh (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`) × 3 cực cảm xúc (`POSITIVE`, `NEUTRAL`, `NEGATIVE` + `NONE`) phục vụ gán nhãn độc lập, đo lường Fleiss' Kappa / Cohen's Kappa và đối chứng với LLM.
    - **Khám phá đặc trưng NLP**:
      - Độ dài bình luận: Trung bình 61.23 từ; chứng minh ngưỡng **`max_length = 128`** cho PhoBERT bao phủ tới **90.51%** dữ liệu.
      - Tâm lý người dùng: Đánh giá tiêu cực dài hơn rõ rệt (mean 71.59 từ) so với đánh giá tích cực (mean 49.30 từ).
