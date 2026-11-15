@@ -22,12 +22,18 @@ Giai đoạn này đóng vai trò bản lề trong chu trình khoa học dữ li
 3.EDA/
 │
 ├── filter_sample_10k.py            # Script tiền xử lý, khử trùng lặp, ẩn danh và lấy mẫu phân tầng 10k
+├── export_excel_annotation.py      # Script xuất file Excel có Guideline, Dropdown & Conditional Formatting cho 3 người
 ├── generate_figures.py             # Script vẽ và xuất 4 biểu đồ EDA độ phân giải cao (DPI=300)
 ├── execute_notebook_inprocess.py   # Script thực thi tự động các cell và xuất outputs cho Notebook
 ├── eda_raw_and_sampled.ipynb       # Jupyter Notebook hoàn chỉnh có sẵn outputs và phân tích học thuật
 │
 ├── dataset_10000_unlabeled.csv     # Bộ dữ liệu 10.000 đánh giá cân bằng sẵn sàng cho LLM gán nhãn
-├── gold_standard_200_template.csv  # Mẫu đối chứng 200 đánh giá (ẨN số sao) cho 4 thành viên nhóm
+├── gold_standard_200_template.csv  # Mẫu đối chứng 200 đánh giá (ẨN số sao) định dạng CSV
+├── gold_standard_200_template.xlsx # Mẫu đối chứng 200 đánh giá định dạng Excel (2 sheets: Hướng dẫn + Gán nhãn)
+├── annotation_3_members/           # Thư mục chứa 3 file Excel độc lập cho 3 thành viên gán nhãn
+│   ├── annotator_1.xlsx            # File gán nhãn của Thành viên 1
+│   ├── annotator_2.xlsx            # File gán nhãn của Thành viên 2
+│   └── annotator_3.xlsx            # File gán nhãn của Thành viên 3
 │
 ├── figures/                        # Thư mục lưu trữ biểu đồ trực quan hóa độ phân giải cao
 │   ├── star_distribution_comparison.png  # So sánh phân bố số sao trước và sau lấy mẫu
@@ -183,10 +189,10 @@ File `3.EDA/gold_standard_200_template.csv` được thiết lập theo chuẩn 
    - `NEGATIVE`: Chê bai, phàn nàn, thất vọng, bức xúc về khía cạnh đó.
    - `NEUTRAL`: Chỉ đề cập thông tin khách quan (VD: *"Phở giá 50k"*) hoặc khen chê trung hòa.
    - `NONE` (hoặc để trống): Bình luận không đề cập đến khía cạnh này.
-5. **Mục đích kiểm định học thuật**:
-   - Mỗi thành viên nhóm nhận 1 bản sao độc lập của `gold_standard_200_template.csv` để gán nhãn mù (*blind annotation*), tránh hiệu ứng thiên kiến dây chuyền.
-   - Đo lường hệ số đồng thuận **Fleiss' Kappa** và **Average Pairwise Cohen's Kappa** ($\kappa = \frac{\sum \kappa_{ij}}{C}$) trên từng khía cạnh trong 5 khía cạnh.
-   - Đối sánh nhãn đồng thuận của con người (*Human Consensus*) với nhãn sinh bởi LLM theo 4 nhóm: *Exact match*, *Updated*, *Only removed*, *Only added*.
+5. **Mục đích kiểm định học thuật (3 Annotators)**:
+   - 3 thành viên nhóm làm việc độc lập trên 3 file Excel riêng biệt trong `3.EDA/annotation_3_members/` (`annotator_1.xlsx`, `annotator_2.xlsx`, `annotator_3.xlsx`) có tích hợp sẵn Sheet Hướng dẫn, Dropdown chọn nhãn và tự động tô màu theo cực cảm xúc.
+   - Đo lường hệ số đồng thuận **Average Pairwise Cohen's Kappa** ($\kappa = \frac{\kappa_{12} + \kappa_{23} + \kappa_{13}}{3}$) và **Fleiss' Kappa** trên từng khía cạnh trong 5 khía cạnh.
+   - Tổng hợp nhãn chuẩn bằng biểu quyết đa số (*Majority Voting* $\ge 2/3$ thành viên) và đối sánh với nhãn sinh bởi LLM theo 4 nhóm: *Exact match*, *Updated*, *Only removed*, *Only added*.
 
 ---
 
@@ -198,10 +204,13 @@ File `3.EDA/gold_standard_200_template.csv` được thiết lập theo chuẩn 
 # 1. Chạy tiền xử lý và lấy mẫu phân tầng 10k (tự động xuất 2 file CSV)
 python -X utf8 3.EDA/filter_sample_10k.py
 
-# 2. Vẽ và xuất 4 biểu đồ độ phân giải cao vào 3.EDA/figures/
+# 2. Xuất file Excel gán nhãn có Dropdown & Guideline cho 3 thành viên
+python -X utf8 3.EDA/export_excel_annotation.py
+
+# 3. Vẽ và xuất 4 biểu đồ độ phân giải cao vào 3.EDA/figures/
 python -X utf8 3.EDA/generate_figures.py
 
-# 3. Thực thi và cập nhật kết quả vào Jupyter Notebook
+# 4. Thực thi và cập nhật kết quả vào Jupyter Notebook
 python -X utf8 3.EDA/execute_notebook_inprocess.py
 ```
 

@@ -489,8 +489,8 @@ df_gold[['id', 'place_id', 'thanh_pho', 'phan_loai', 'noi_dung_review', 'FOOD', 
 - **Đặc trưng ngôn ngữ**: Thống kê danh mục Teencode (`ko`, `k`, `đc`, `nv`, `vs`...) và Emoji, đặt nền móng cho việc thử nghiệm các kịch bản tiền xử lý (giữ nguyên Emoji gốc vs chuyển đổi Emoji sang văn bản kết hợp chuẩn hóa Teencode).
 
 ### 2. Kế hoạch triển khai giai đoạn 4 (LLM-Assisted ABSA Labeling & Fine-tuning):
-1. **Annotation trên 5 khía cạnh (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`)**: 4 thành viên tiến hành gán nhãn độc lập với bộ giá trị (`POSITIVE`, `NEUTRAL`, `NEGATIVE`, `NONE`) trên `gold_standard_200_template.csv`.
-2. **Kiểm định Inter-Annotator Agreement**: Tính toán **Fleiss' Kappa** và **Average Pairwise Cohen's Kappa** cho từng khía cạnh trong 5 khía cạnh.
+1. **Annotation trên 5 khía cạnh (`FOOD`, `SERVICE`, `PRICE`, `AMBIENCE`, `GENERAL`)**: 3 thành viên tiến hành gán nhãn độc lập trên 3 file Excel (`annotator_1.xlsx`, `annotator_2.xlsx`, `annotator_3.xlsx`) với bộ giá trị (`POSITIVE`, `NEUTRAL`, `NEGATIVE`, `NONE`).
+2. **Kiểm định Inter-Annotator Agreement**: Tính toán **Average Pairwise Cohen's Kappa** ($\\kappa = \\frac{\\kappa_{12}+\\kappa_{23}+\\kappa_{13}}{3}$) và **Fleiss' Kappa** cho từng khía cạnh trong 5 khía cạnh.
 3. **Prompt Engineering & Multi-LLM Labeling**: Thiết kế prompt chuẩn hóa hướng dẫn các mô hình ngôn ngữ lớn (Gemini Flash, Llama 3, Gemma 3) gán nhãn đa khía cạnh cho 10.000 mẫu.
 4. **Đối chứng & Huấn luyện**: Đánh giá mức độ khớp giữa LLM và con người, sau đó huấn luyện và so sánh hiệu năng trên các kiến trúc `PhoBERT-base-v2`, `ViSoBERT` và `CafeBERT`."""))
 
